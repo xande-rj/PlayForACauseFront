@@ -1,4 +1,5 @@
 "use client";
+import React from 'react';
 
 import {
   ChakraProvider,
@@ -10,23 +11,16 @@ import {
   Input,
   Button,
   FormHelperText,
-  Alert,
   useToast,
 } from "@chakra-ui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FunctionComponent } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useNavigate, Outlet, Link } from "react-router-dom";
 import axios from "axios";
-import { LoginFormSchema } from "./loginSchema";
+import Link from "next/link";
 
-interface Login {
-  email: string;
-  password: string;
-  onSubmit: () => void;
-  handleSubmit: () => void;
-}
+import { useRouter } from 'next/router';
+
 
 const LoginSchema = z.object({
   email: z.string().email(),
@@ -34,35 +28,31 @@ const LoginSchema = z.object({
 });
 
 type LoginSchemaType = z.infer<typeof LoginSchema>;
-
-const App: FunctionComponent<Login> = () => {
-  const navigate = useNavigate();
-const toast = useToast();
-
+const Home = () => {
+  const toast = useToast();
+  
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginSchemaType>({
-    resolver: zodResolver(LoginSchema),
-  });
+  } = useForm<LoginSchemaType>({ resolver: zodResolver(LoginSchema) });
 
   const onSubmit = (data: any) => {
-    const apiUrl = `http://localhost:3001/usuarios/${data.email}/${data.password}`;
+    const apiUrl = `https://playforacauseapi-production.up.railway.app/usuarios/${data.email}/${data.password}`;
     axios
       .get(apiUrl)
       .then((response) => {
-        // O conteúdo da resposta estará disponível em response.data
         const jsonData = response.data;
-        navigate(`/chat/${jsonData.nome}`);
+        // Redirecionamento para outra página com os dados
+        window.location.href=`/chat/?nome=${jsonData.nome}`;
       })
       .catch((error) => {
-          toast({
-            title: "Erro no Login Usuario ou Senha Incorreto ",
-            status: "error",
-            duration: 5000, // A duração em milissegundos
-            isClosable: true,
-          });
+        toast({
+          title: "Erro no Login: Usuário ou Senha Incorretos",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
       });
   };
 
@@ -76,16 +66,16 @@ const toast = useToast();
         justifyContent="center"
         alignItems="center"
       >
-        <form action="" onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <Flex direction="column" p={100} rounded={20} bg="white">
             <FormControl mb={4} isRequired>
-              <FormLabel fontSize="2xl">Email</FormLabel>
+              <FormLabel fontSize="2xl">Email</FormLabel>{" "}
               <Input
                 type="email"
                 placeholder="Digite seu email"
                 {...register("email")}
-              />
-              {errors.email && <span>{errors.email.message}</span>}
+              />{" "}
+              {errors.email && <span>{errors.email.message}</span>}{" "}
             </FormControl>
             <FormControl mb={4} isRequired>
               <FormLabel fontSize="2xl">Senha</FormLabel>
@@ -106,9 +96,10 @@ const toast = useToast();
             </Button>
             <FormControl>
               <FormHelperText>
-                Ainda nao e cadastrado?
-                <Link to="/cadastro"> Clique aqui</Link>
-                <Outlet />
+                Ainda não é cadastrado?
+                <Link href="/Cadastro">
+                  Clique aqui
+                </Link>
               </FormHelperText>
             </FormControl>
           </Flex>
@@ -118,4 +109,4 @@ const toast = useToast();
   );
 };
 
-export default App;
+export default Home;

@@ -12,33 +12,29 @@ import {
   Button,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import { Link, useParams, Outlet } from "react-router-dom";
 import io, { Socket } from "socket.io-client"; // Importe o tipo Socket do socket.io-client
-import * as uuid from "uuid";
-
-interface Message {
+import Link from "next/link";
+import { useUrlParams } from "./url/getUrl";
+export interface Message {
   id: string;
   name: string;
   text: string;
 }
 
-interface Payload {
-  name: string;
-  text: string;
-}
 
-interface User {
+export interface User {
   id: string;
-  username: string;
+  nome: string;
 }
 
-const Chat = () => {
-  const { username } = useParams();
+export default function Chat() {
+  const { nome }:any = useUrlParams();
+
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [socket, setSocket] = useState<Socket | null>(null);
-
   useEffect(() => {
     const newSocket = io("http://localhost:3333", {
       transports: ["websocket"],
@@ -46,7 +42,7 @@ const Chat = () => {
 
     newSocket.on("connect", () => {
       console.log("Conectado ao servidor Socket.IO");
-      newSocket.emit("joinChat", { username });
+      newSocket.emit("joinChat", { nome });
     });
 
     newSocket.on("chatMessage", (message: Message) => {
@@ -54,7 +50,7 @@ const Chat = () => {
     });
 
     newSocket.on("userJoined", (user) => {
-      console.log(`${user} entrou na sala`);
+      console.log(`${nome} entrou na sala`);
       setUsers((prevUsers) => [...prevUsers, user]);
     });
 
@@ -71,14 +67,15 @@ const Chat = () => {
     return () => {
       newSocket.disconnect();
     };
-  }, [username]);
+  }, [nome]);
 
   const handleSendMessage = () => {
     if (socket && inputMessage.trim() !== "") {
-      socket.emit("chatMessage", { name: username, text: inputMessage });
+      socket.emit("chatMessage", { name: nome, text: inputMessage });
       setInputMessage("");
     }
   };
+
   return (
     <ChakraProvider>
       <CSSReset />
@@ -87,21 +84,21 @@ const Chat = () => {
           <Text fontSize="xl" fontWeight="bold" mb={4}>
             Usuários na Sala
           </Text>
-          {/* Exiba a lista de usuários na sala */}
           {users.map((user, index) => (
-            <Text key={index}>{user.username}</Text>
+            <Text key={index}>
+              {user.nome}
+              </Text>
           ))}
-          <Link to="/">
+          <Link href="/">
             <Button colorScheme="green" size="lg">
               Voltar
             </Button>
           </Link>
-          <Outlet />
         </VStack>
 
         <Box flex="1" p={4} bg="white">
           <Box mb={4}>
-            <Text fontWeight="bold">{username}</Text>
+            <Text fontWeight="bold">{nome}</Text>
             <Text>
               {messages.map((message, index) => (
                 <div key={index}>
@@ -126,6 +123,4 @@ const Chat = () => {
       </Flex>
     </ChakraProvider>
   );
-};
-
-export default Chat;
+}
